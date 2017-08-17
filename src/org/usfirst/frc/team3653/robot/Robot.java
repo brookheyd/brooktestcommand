@@ -8,6 +8,11 @@ import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+import edu.wpi.first.wpilibj.RobotDrive;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.VictorSP;
+
 import org.usfirst.frc.team3653.robot.commands.ExampleCommand;
 import org.usfirst.frc.team3653.robot.subsystems.ExampleSubsystem;
 
@@ -22,6 +27,8 @@ public class Robot extends IterativeRobot {
 
 	public static final ExampleSubsystem exampleSubsystem = new ExampleSubsystem();
 	public static OI oi;
+	private RobotDrive m_drive;
+	private XboxController m_controller;
 
 	Command autonomousCommand;
 	SendableChooser<Command> chooser = new SendableChooser<>();
@@ -36,6 +43,14 @@ public class Robot extends IterativeRobot {
 		chooser.addDefault("Default Auto", new ExampleCommand());
 		// chooser.addObject("My Auto", new MyAutoCommand());
 		SmartDashboard.putData("Auto mode", chooser);
+		
+		m_controller = new XboxController(0);
+
+		m_drive = new RobotDrive(
+						new VictorSP(0),   // Front Left
+						new VictorSP(2), // Rear Left
+						new VictorSP(3),   // Front Right
+						new VictorSP(1) ); // Rear Right
 	}
 
 	/**
@@ -96,6 +111,8 @@ public class Robot extends IterativeRobot {
 		// this line or comment it out.
 		if (autonomousCommand != null)
 			autonomousCommand.cancel();
+		//stop drive at start of tele
+		m_drive.mecanumDrive_Cartesian( 0, 0, 0, 0 );
 	}
 
 	/**
@@ -104,6 +121,18 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() {
 		Scheduler.getInstance().run();
+		
+		double driveSensitivity = 0.25;
+		double angle = 0.0;
+		double driveX = m_controller.getX( GenericHID.Hand.kLeft );
+    	double driveY = m_controller.getY( GenericHID.Hand.kLeft );
+    	double spin = m_controller.getX( GenericHID.Hand.kRight );
+    	
+    	m_drive.mecanumDrive_Cartesian(
+				driveX * driveSensitivity,
+				spin * driveSensitivity,
+				driveY * driveSensitivity,
+				angle );
 	}
 
 	/**
@@ -112,5 +141,6 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void testPeriodic() {
 		LiveWindow.run();
+		
 	}
 }
